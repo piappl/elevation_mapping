@@ -13,10 +13,11 @@
 #include <thread>
 
 #include <grid_map_core/GridMap.hpp>
- 
+
 #include "elevation_mapping/postprocessing/PostprocessingPipelineFunctor.hpp"
 
-namespace elevation_mapping {
+namespace elevation_mapping
+{
 
 /**
  * @brief A wrapper around the postprocessing pipelines functor.
@@ -25,18 +26,31 @@ namespace elevation_mapping {
  * It is assumed that the members of this function are guarded by an external mutex,
  * handled by the owner of this class.
  */
-class PostprocessingWorker {
- public:
+class PostprocessingWorker
+{
+public:
   using GridMap = grid_map::GridMap;
 
   explicit PostprocessingWorker(std::shared_ptr<rclcpp::Node> nodeHandle);
 
   /*! @name Accessors */
   ///@{
-  boost::asio::io_service& ioService() { return ioService_; }
-  std::thread& thread() { return thread_; }
-  const GridMap& dataBuffer() { return dataBuffer_; }
-  void setDataBuffer(GridMap data) { dataBuffer_ = std::move(data); }
+  boost::asio::io_service& ioService()
+  {
+    return ioService_;
+  }
+  std::thread& thread()
+  {
+    return thread_;
+  }
+  const GridMap& dataBuffer()
+  {
+    return dataBuffer_;
+  }
+  void setDataBuffer(GridMap data)
+  {
+    dataBuffer_ = std::move(data);
+  }
   ///@}
 
   /*! @name Methods */
@@ -63,7 +77,7 @@ class PostprocessingWorker {
   bool hasSubscribers() const;
   ///@}
 
- protected:
+protected:
   //! The functor to execute on a given GridMap.
   PostprocessingPipelineFunctor functor_;
 

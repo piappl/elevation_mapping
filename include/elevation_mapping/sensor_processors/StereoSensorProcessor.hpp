@@ -10,7 +10,8 @@
 #include "elevation_mapping/PointXYZRGBConfidenceRatio.hpp"
 #include "elevation_mapping/sensor_processors/SensorProcessorBase.hpp"
 
-namespace elevation_mapping {
+namespace elevation_mapping
+{
 
 /*!
  * Sensor processor for stereo camera sensors.
@@ -18,11 +19,13 @@ namespace elevation_mapping {
  * computes the measurement variances based on a sensor model in
  * the desired frame.
  *
- * "Localization and Path Planning of a Climbing Robot for Corrosion Monitoring", Hannes Keller, Semester Project, ETH Zurich, 2014.
+ * "Localization and Path Planning of a Climbing Robot for Corrosion Monitoring", Hannes Keller, Semester Project, ETH
+ * Zurich, 2014.
  */
 
-class StereoSensorProcessor : public SensorProcessorBase {
- public:
+class StereoSensorProcessor : public SensorProcessorBase
+{
+public:
   /*!
    * Constructor.
    * @param nodeHandle the ROS node handle.
@@ -35,7 +38,7 @@ class StereoSensorProcessor : public SensorProcessorBase {
    */
   ~StereoSensorProcessor() override;
 
- private:
+private:
   /*!
    * Reads and verifies the parameters.
    * @return true if successful.
@@ -50,8 +53,8 @@ class StereoSensorProcessor : public SensorProcessorBase {
    * @param[out] variances the elevation map height variances.
    * @return true if successful.
    */
-  bool computeVariances(const PointCloudType::ConstPtr pointCloud, const Eigen::Matrix<double, 6, 6>& robotPoseCovariance,
-                        Eigen::VectorXf& variances) override;
+  bool computeVariances(const PointCloudType::ConstPtr pointCloud,
+                        const Eigen::Matrix<double, 6, 6>& robotPoseCovariance, Eigen::VectorXf& variances) override;
 
   /*!
    * Cuts off points that are not within the cutoff interval

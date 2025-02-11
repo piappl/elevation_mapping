@@ -28,13 +28,15 @@
 #include "elevation_mapping/PointXYZRGBConfidenceRatio.hpp"
 #include "elevation_mapping/postprocessing/PostprocessorPool.hpp"
 
-namespace elevation_mapping {
+namespace elevation_mapping
+{
 
 /*!
  * Elevation map stored as grid map handling elevation height, variance, color etc.
  */
-class ElevationMap {
- public:
+class ElevationMap
+{
+public:
   /*!
    * Constructor.
    */
@@ -75,7 +77,8 @@ class ElevationMap {
    * @return true if successful.
    */
   bool update(const grid_map::Matrix& varianceUpdate, const grid_map::Matrix& horizontalVarianceUpdateX,
-              const grid_map::Matrix& horizontalVarianceUpdateY, const grid_map::Matrix& horizontalVarianceUpdateXY, const rclcpp::Time& time);
+              const grid_map::Matrix& horizontalVarianceUpdateY, const grid_map::Matrix& horizontalVarianceUpdateXY,
+              const rclcpp::Time& time);
 
   /*!
    * Triggers the fusion of the entire elevation map.
@@ -238,12 +241,12 @@ class ElevationMap {
    * @param lengthInYSubmap Length of the submap in Y direction.
    * @param margin Extra margin that gets added to the submap boundaries.
    */
-  void setRawSubmapHeight(const grid_map::Position& initPosition, float mapHeight, double lengthInXSubmap, double lengthInYSubmap,
-                          double margin);
+  void setRawSubmapHeight(const grid_map::Position& initPosition, float mapHeight, double lengthInXSubmap,
+                          double lengthInYSubmap, double margin);
 
   friend class ElevationMapping;
 
- private:
+private:
   /*!
    * Fuses a region of the map.
    * @param topLeftIndex the top left index of the region.

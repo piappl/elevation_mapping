@@ -11,26 +11,28 @@
 #include "elevation_mapping/PointXYZRGBConfidenceRatio.hpp"
 #include "elevation_mapping/sensor_processors/SensorProcessorBase.hpp"
 
-namespace elevation_mapping {
+namespace elevation_mapping
+{
 
 /*!
  * Sensor processor for laser range sensors.
  */
-class PerfectSensorProcessor : public SensorProcessorBase {
- public:
+class PerfectSensorProcessor : public SensorProcessorBase
+{
+public:
   /*!
    * Constructor.
    * @param nodeHandle the ROS node handle.
    */
   PerfectSensorProcessor(std::shared_ptr<rclcpp::Node>& nodeHandle,
-    const SensorProcessorBase::GeneralParameters& generalParameters);
+                         const SensorProcessorBase::GeneralParameters& generalParameters);
 
   /*!
    * Destructor.
    */
   ~PerfectSensorProcessor() override;
 
- private:
+private:
   /*!
    * Reads and verifies the parameters.
    * @param inputSourceName
@@ -46,8 +48,8 @@ class PerfectSensorProcessor : public SensorProcessorBase {
    * @param[out] variances the elevation map height variances.
    * @return true if successful.
    */
-  bool computeVariances(const PointCloudType::ConstPtr pointCloud, const Eigen::Matrix<double, 6, 6>& robotPoseCovariance,
-                        Eigen::VectorXf& variances) override;
+  bool computeVariances(const PointCloudType::ConstPtr pointCloud,
+                        const Eigen::Matrix<double, 6, 6>& robotPoseCovariance, Eigen::VectorXf& variances) override;
 };
 
 } /* namespace elevation_mapping */

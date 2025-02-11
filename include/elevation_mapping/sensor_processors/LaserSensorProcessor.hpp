@@ -11,27 +11,30 @@
 #include "elevation_mapping/PointXYZRGBConfidenceRatio.hpp"
 #include "elevation_mapping/sensor_processors/SensorProcessorBase.hpp"
 
-namespace elevation_mapping {
+namespace elevation_mapping
+{
 
 /*!
  * Sensor processor for laser range sensors.
  */
-class LaserSensorProcessor : public SensorProcessorBase {
- public:
+class LaserSensorProcessor : public SensorProcessorBase
+{
+public:
   /*!
    * Constructor.
    * @param nodeHandle the ROS node handle.
    * @param GeneralParameters
    * @param inputSourceName
    */
-  LaserSensorProcessor(std::shared_ptr<rclcpp::Node>& nodeHandle, const SensorProcessorBase::GeneralParameters& generalParameters);
+  LaserSensorProcessor(std::shared_ptr<rclcpp::Node>& nodeHandle,
+                       const SensorProcessorBase::GeneralParameters& generalParameters);
 
   /*!
    * Destructor.
    */
   ~LaserSensorProcessor() override;
 
- private:
+private:
   /*!
    * Reads and verifies the parameters.
    * @param inputSourceName
@@ -47,8 +50,8 @@ class LaserSensorProcessor : public SensorProcessorBase {
    * @param[out] variances the elevation map height variances.
    * @return true if successful.
    */
-  bool computeVariances(const PointCloudType::ConstPtr pointCloud, const Eigen::Matrix<double, 6, 6>& robotPoseCovariance,
-                        Eigen::VectorXf& variances) override;
+  bool computeVariances(const PointCloudType::ConstPtr pointCloud,
+                        const Eigen::Matrix<double, 6, 6>& robotPoseCovariance, Eigen::VectorXf& variances) override;
 };
 
 } /* namespace elevation_mapping */

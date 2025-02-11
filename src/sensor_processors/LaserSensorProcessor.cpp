@@ -15,7 +15,8 @@
 
 #include "elevation_mapping/PointXYZRGBConfidenceRatio.hpp"
 
-namespace elevation_mapping {
+namespace elevation_mapping
+{
 
 /*!
  * Anisotropic laser range sensor model:
@@ -27,18 +28,22 @@ namespace elevation_mapping {
  * International Conference on Applied Robotics for the Power Industry (CARPI), 2012.
  */
 
-LaserSensorProcessor::LaserSensorProcessor(std::shared_ptr<rclcpp::Node>& nodeHandle, const SensorProcessorBase::GeneralParameters& generalParameters)
-    : SensorProcessorBase(nodeHandle, generalParameters) {}
+LaserSensorProcessor::LaserSensorProcessor(std::shared_ptr<rclcpp::Node>& nodeHandle,
+                                           const SensorProcessorBase::GeneralParameters& generalParameters)
+  : SensorProcessorBase(nodeHandle, generalParameters)
+{
+}
 
 LaserSensorProcessor::~LaserSensorProcessor() = default;
 
-bool LaserSensorProcessor::readParameters(std::string& inputSourceName) {
+bool LaserSensorProcessor::readParameters(std::string& inputSourceName)
+{
   SensorProcessorBase::readParameters(inputSourceName);
 
   nodeHandle_->declare_parameter(inputSourceName + ".sensor_processor.min_radius", 0.0);
   nodeHandle_->declare_parameter(inputSourceName + ".sensor_processor.beam_angle", 0.0);
   nodeHandle_->declare_parameter(inputSourceName + ".sensor_processor.beam_constant", 0.0);
-  
+
   nodeHandle_->get_parameter(inputSourceName + ".sensor_processor.min_radius", sensorParameters_["min_radius"]);
   nodeHandle_->get_parameter(inputSourceName + ".sensor_processor.beam_angle", sensorParameters_["beam_angle"]);
   nodeHandle_->get_parameter(inputSourceName + ".sensor_processor.beam_constant", sensorParameters_["beam_constant"]);
@@ -50,7 +55,9 @@ bool LaserSensorProcessor::readParameters(std::string& inputSourceName) {
 }
 
 bool LaserSensorProcessor::computeVariances(const PointCloudType::ConstPtr pointCloud,
-                                            const Eigen::Matrix<double, 6, 6>& robotPoseCovariance, Eigen::VectorXf& variances) {
+                                            const Eigen::Matrix<double, 6, 6>& robotPoseCovariance,
+                                            Eigen::VectorXf& variances)
+{
   variances.resize(pointCloud->size());
 
   // Projection vector (P).
@@ -67,19 +74,21 @@ bool LaserSensorProcessor::computeVariances(const PointCloudType::ConstPtr point
   const Eigen::Matrix3f C_BM_transpose = rotationMapToBase_.transposed().toImplementation().cast<float>();
   const Eigen::RowVector3f P_mul_C_BM_transpose = projectionVector * C_BM_transpose;
   const Eigen::Matrix3f C_SB_transpose = rotationBaseToSensor_.transposed().toImplementation().cast<float>();
-  const Eigen::Matrix3f B_r_BS_skew =
-      kindr::getSkewMatrixFromVector(Eigen::Vector3f(translationBaseToSensorInBaseFrame_.toImplementation().cast<float>()));
+  const Eigen::Matrix3f B_r_BS_skew = kindr::getSkewMatrixFromVector(
+      Eigen::Vector3f(translationBaseToSensorInBaseFrame_.toImplementation().cast<float>()));
 
   const float varianceNormal = sensorParameters_.at("min_radius") * sensorParameters_.at("min_radius");
   const float beamConstant = sensorParameters_.at("beam_constant");
   const float beamAngle = sensorParameters_.at("beam_angle");
-  for (size_t i = 0; i < pointCloud->size(); ++i) {
+  for (size_t i = 0; i < pointCloud->size(); ++i)
+  {
     // TODO(needs assignment): Move this loop body into a function for better unit testing.
     // For every point in point cloud.
 
     // Preparation.
     const auto& point = pointCloud->points[i];
-    const Eigen::Vector3f pointVector(point.x, point.y, point.z);  // S_r_SP // NOLINT(cppcoreguidelines-pro-type-union-access)
+    const Eigen::Vector3f pointVector(point.x, point.y,
+                                      point.z);  // S_r_SP // NOLINT(cppcoreguidelines-pro-type-union-access)
 
     // Measurement distance.
     const float measurementDistance = pointVector.norm();
@@ -92,7 +101,8 @@ bool LaserSensorProcessor::computeVariances(const PointCloudType::ConstPtr point
     sensorVariance.diagonal() << varianceLateral, varianceLateral, varianceNormal;
 
     // Robot rotation Jacobian (J_q).
-    const Eigen::Matrix3f C_SB_transpose_times_S_r_SP_skew = kindr::getSkewMatrixFromVector(Eigen::Vector3f(C_SB_transpose * pointVector));
+    const Eigen::Matrix3f C_SB_transpose_times_S_r_SP_skew =
+        kindr::getSkewMatrixFromVector(Eigen::Vector3f(C_SB_transpose * pointVector));
     const Eigen::RowVector3f rotationJacobian = P_mul_C_BM_transpose * (C_SB_transpose_times_S_r_SP_skew + B_r_BS_skew);
 
     // Measurement variance for map (error propagation law).

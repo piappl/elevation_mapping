@@ -13,8 +13,9 @@
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
 
-namespace elevation_mapping {
- 
+namespace elevation_mapping
+{
+
 /**
  * @brief A configurable postprocessing functor, it applies the configured filter pipeline to the input.
  *
@@ -28,8 +29,9 @@ namespace elevation_mapping {
  *   postprocessor(gridMap);
  *
  */
-class PostprocessingPipelineFunctor {
- public:
+class PostprocessingPipelineFunctor
+{
+public:
   using GridMap = grid_map::GridMap;
 
   /**
@@ -63,7 +65,7 @@ class PostprocessingPipelineFunctor {
    */
   bool hasSubscribers() const;
 
- private:
+private:
   /**
    * @brief Reads in the parameters from the ROS parameter server.
    * @return A flag whether the parameters were read successfully.

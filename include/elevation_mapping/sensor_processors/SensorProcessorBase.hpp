@@ -28,7 +28,8 @@
 #include "elevation_mapping/PointXYZRGBConfidenceRatio.hpp"
 #include "elevation_mapping/ThreadSafeDataWrapper.hpp"
 
-namespace elevation_mapping {
+namespace elevation_mapping
+{
 
 /*!
  * Generic Sensor processor base class. Provides functionalities
@@ -38,24 +39,29 @@ namespace elevation_mapping {
  * computes the measurement variances based on a sensor model in
  * the desired frame.
  */
-class SensorProcessorBase {
- public:
+class SensorProcessorBase
+{
+public:
   using Ptr = std::unique_ptr<SensorProcessorBase>;
   friend class ElevationMapping;
   friend class Input;
 
-  struct GeneralParameters {
+  struct GeneralParameters
+  {
     std::string robotBaseFrameId_;
     std::string mapFrameId_;
 
     GeneralParameters(std::string robotBaseFrameId = "robot", std::string mapFrameId = "map")
-        : robotBaseFrameId_(std::move(robotBaseFrameId)), mapFrameId_(std::move(mapFrameId)) {}
+      : robotBaseFrameId_(std::move(robotBaseFrameId)), mapFrameId_(std::move(mapFrameId))
+    {
+    }
   };
 
   /*!
    * Constructor.
    * @param nodeHandle the ROS node handle.
-   * @param generalConfig General parameters that the sensor processor must know in order to work. // TODO (magnus) improve documentation.
+   * @param generalConfig General parameters that the sensor processor must know in order to work. // TODO (magnus)
+   * improve documentation.
    * @param inputSourceName input source name
    */
   SensorProcessorBase(std::shared_ptr<rclcpp::Node>& nodeHandle, const GeneralParameters& generalConfig);
@@ -81,9 +87,12 @@ class SensorProcessorBase {
    * Checks if a valid tf transformation was received since startup.
    * @return True if there was one valid tf transformation.
    */
-  bool isTfAvailableInBuffer() { return firstTfAvailable_; }
+  bool isTfAvailableInBuffer()
+  {
+    return firstTfAvailable_;
+  }
 
- protected:
+protected:
   /*!
    * Reads and verifies the parameters.
    * @param input source name
@@ -115,8 +124,8 @@ class SensorProcessorBase {
    * @param[out] variances the elevation map height variances.
    * @return true if successful.
    */
-  virtual bool computeVariances(const PointCloudType::ConstPtr pointCloud, const Eigen::Matrix<double, 6, 6>& robotPoseCovariance,
-                                Eigen::VectorXf& variances) = 0;
+  virtual bool computeVariances(const PointCloudType::ConstPtr pointCloud,
+                                const Eigen::Matrix<double, 6, 6>& robotPoseCovariance, Eigen::VectorXf& variances) = 0;
 
   /*!
    * Update the transformations for a given time stamp.
@@ -132,7 +141,8 @@ class SensorProcessorBase {
    * @param[in] targetFrame the desired target frame.
    * @return true if successful.
    */
-  bool transformPointCloud(PointCloudType::ConstPtr pointCloud, PointCloudType::Ptr pointCloudTransformed, const std::string& targetFrame);
+  bool transformPointCloud(PointCloudType::ConstPtr pointCloud, PointCloudType::Ptr pointCloudTransformed,
+                           const std::string& targetFrame);
 
   /*!
    * Removes points with z-coordinate above a limit in map frame.
@@ -173,28 +183,29 @@ class SensorProcessorBase {
   //! Ignore points below this height in map frame.
   double ignorePointsLowerThreshold_;*/
 
-  struct Parameters {
+  struct Parameters
+  {
     //! Ignore points above this height in map frame.
-    double ignorePointsUpperThreshold_{std::numeric_limits<double>::infinity()};
+    double ignorePointsUpperThreshold_{ std::numeric_limits<double>::infinity() };
 
     //! Ignore points below this height in map frame.
-    double ignorePointsLowerThreshold_{-std::numeric_limits<double>::infinity()};
+    double ignorePointsLowerThreshold_{ -std::numeric_limits<double>::infinity() };
 
     //! Ignore points inside this box with min_x in map frame.
-    double ignorePointsInsideMinX_{0};
+    double ignorePointsInsideMinX_{ 0 };
     //! Ignore points inside this box with max_x in map frame.
-    double ignorePointsInsideMaxX_{0};
+    double ignorePointsInsideMaxX_{ 0 };
     //! Ignore points inside this box with min_y in map frame.
-    double ignorePointsInsideMinY_{0};
+    double ignorePointsInsideMinY_{ 0 };
     //! Ignore points inside this box with max_y in map frame.
-    double ignorePointsInsideMaxY_{0};
+    double ignorePointsInsideMaxY_{ 0 };
     //! Ignore points inside this box with min_z in map frame.
-    double ignorePointsInsideMinZ_{0};
+    double ignorePointsInsideMinZ_{ 0 };
     //! Ignore points inside this box with max_z in map frame.
-    double ignorePointsInsideMaxZ_{0};
+    double ignorePointsInsideMaxZ_{ 0 };
 
     //! Use VoxelGrid filter to cleanup pointcloud if true.
-    bool applyVoxelGridFilter_{false};
+    bool applyVoxelGridFilter_{ false };
 
     //! Sensor parameters.
     std::unordered_map<std::string, double> sensorParameters_;
@@ -206,7 +217,7 @@ class SensorProcessorBase {
   std::unordered_map<std::string, double> sensorParameters_;
 
   //! Use VoxelGrid filter to cleanup pointcloud if true.
-  //bool applyVoxelGridFilter_;
+  // bool applyVoxelGridFilter_;
 
   //! Indicates if the requested tf transformation was available.
   bool firstTfAvailable_;

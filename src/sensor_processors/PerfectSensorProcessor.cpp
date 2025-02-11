@@ -18,24 +18,30 @@
 
 #include "elevation_mapping/PointXYZRGBConfidenceRatio.hpp"
 
-namespace elevation_mapping {
+namespace elevation_mapping
+{
 
 /*!
  * Noiseless, perfect sensor.
  */
 
 PerfectSensorProcessor::PerfectSensorProcessor(std::shared_ptr<rclcpp::Node>& nodeHandle,
-                                              const SensorProcessorBase::GeneralParameters& generalParameters)
-    : SensorProcessorBase(nodeHandle, generalParameters) {}
+                                               const SensorProcessorBase::GeneralParameters& generalParameters)
+  : SensorProcessorBase(nodeHandle, generalParameters)
+{
+}
 
 PerfectSensorProcessor::~PerfectSensorProcessor() = default;
 
-bool PerfectSensorProcessor::readParameters(std::string& inputSourceName) {
+bool PerfectSensorProcessor::readParameters(std::string& inputSourceName)
+{
   return SensorProcessorBase::readParameters(inputSourceName);
 }
 
 bool PerfectSensorProcessor::computeVariances(const PointCloudType::ConstPtr pointCloud,
-                                              const Eigen::Matrix<double, 6, 6>& robotPoseCovariance, Eigen::VectorXf& variances) {
+                                              const Eigen::Matrix<double, 6, 6>& robotPoseCovariance,
+                                              Eigen::VectorXf& variances)
+{
   variances.resize(pointCloud->size());
 
   // Projection vector (P).
@@ -43,7 +49,8 @@ bool PerfectSensorProcessor::computeVariances(const PointCloudType::ConstPtr poi
 
   // Sensor Jacobian (J_s).
   const Eigen::RowVector3f sensorJacobian =
-      projectionVector * (rotationMapToBase_.transposed() * rotationBaseToSensor_.transposed()).toImplementation().cast<float>();
+      projectionVector *
+      (rotationMapToBase_.transposed() * rotationBaseToSensor_.transposed()).toImplementation().cast<float>();
 
   // Robot rotation covariance matrix (Sigma_q).
   const Eigen::Matrix3f rotationVariance = robotPoseCovariance.bottomRightCorner(3, 3).cast<float>();
@@ -52,16 +59,18 @@ bool PerfectSensorProcessor::computeVariances(const PointCloudType::ConstPtr poi
   const Eigen::Matrix3f C_BM_transpose = rotationMapToBase_.transposed().toImplementation().cast<float>();
   const Eigen::RowVector3f P_mul_C_BM_transpose = projectionVector * C_BM_transpose;
   const Eigen::Matrix3f C_SB_transpose = rotationBaseToSensor_.transposed().toImplementation().cast<float>();
-  const Eigen::Matrix3f B_r_BS_skew =
-      kindr::getSkewMatrixFromVector(Eigen::Vector3f(translationBaseToSensorInBaseFrame_.toImplementation().cast<float>()));
+  const Eigen::Matrix3f B_r_BS_skew = kindr::getSkewMatrixFromVector(
+      Eigen::Vector3f(translationBaseToSensorInBaseFrame_.toImplementation().cast<float>()));
 
-  for (unsigned int i = 0; i < pointCloud->size(); ++i) {
+  for (unsigned int i = 0; i < pointCloud->size(); ++i)
+  {
     // For every point in point cloud.
 
     // Preparation.
     auto& point = pointCloud->points[i];
-    Eigen::Vector3f pointVector(point.x, point.y, point.z);  // S_r_SP // NOLINT(cppcoreguidelines-pro-type-union-access)
-    float heightVariance = 0.0;                              // sigma_p
+    Eigen::Vector3f pointVector(point.x, point.y,
+                                point.z);  // S_r_SP // NOLINT(cppcoreguidelines-pro-type-union-access)
+    float heightVariance = 0.0;            // sigma_p
 
     // Compute sensor covariance matrix (Sigma_S) with sensor model.
     float varianceNormal = 0.0;
@@ -70,7 +79,8 @@ bool PerfectSensorProcessor::computeVariances(const PointCloudType::ConstPtr poi
     sensorVariance.diagonal() << varianceLateral, varianceLateral, varianceNormal;
 
     // Robot rotation Jacobian (J_q).
-    const Eigen::Matrix3f C_SB_transpose_times_S_r_SP_skew = kindr::getSkewMatrixFromVector(Eigen::Vector3f(C_SB_transpose * pointVector));
+    const Eigen::Matrix3f C_SB_transpose_times_S_r_SP_skew =
+        kindr::getSkewMatrixFromVector(Eigen::Vector3f(C_SB_transpose * pointVector));
     const Eigen::RowVector3f rotationJacobian = P_mul_C_BM_transpose * (C_SB_transpose_times_S_r_SP_skew + B_r_BS_skew);
 
     // Measurement variance for map (error propagation law).

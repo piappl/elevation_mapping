@@ -12,10 +12,12 @@
 
 // using namespace kindr;
 
-namespace elevation_mapping {
+namespace elevation_mapping
+{
 
-RobotMotionMapUpdater::RobotMotionMapUpdater(std::shared_ptr<rclcpp::Node> nodeHandle) : 
-nodeHandle_(nodeHandle), covarianceScale_(1.0) {
+RobotMotionMapUpdater::RobotMotionMapUpdater(std::shared_ptr<rclcpp::Node> nodeHandle)
+  : nodeHandle_(nodeHandle), covarianceScale_(1.0)
+{
   previousReducedCovariance_.setZero();
   previousUpdateTime_ = rclcpp::Clock(RCL_ROS_TIME).now();
   // TODO(max): How to initialize previousRobotPose_?
@@ -23,18 +25,21 @@ nodeHandle_(nodeHandle), covarianceScale_(1.0) {
 
 RobotMotionMapUpdater::~RobotMotionMapUpdater() = default;
 
-bool RobotMotionMapUpdater::readParameters() {
-  nodeHandle_->declare_parameter("robot_motion_map_update/covariance_scale", rclcpp::ParameterValue(1.0));  
-  nodeHandle_->get_parameter("robot_motion_map_update/covariance_scale", covarianceScale_);  
+bool RobotMotionMapUpdater::readParameters()
+{
+  nodeHandle_->declare_parameter("robot_motion_map_update/covariance_scale", rclcpp::ParameterValue(1.0));
+  nodeHandle_->get_parameter("robot_motion_map_update/covariance_scale", covarianceScale_);
   return true;
 }
 
 bool RobotMotionMapUpdater::update(ElevationMap& map, const Pose& robotPose, const PoseCovariance& robotPoseCovariance,
-                                   const rclcpp::Time& time) {
+                                   const rclcpp::Time& time)
+{
   const PoseCovariance robotPoseCovarianceScaled = covarianceScale_ * robotPoseCovariance;
 
   // Check if update necessary.
-  if (previousUpdateTime_ == time) {
+  if (previousUpdateTime_ == time)
+  {
     return false;
   }
 
@@ -57,7 +62,8 @@ bool RobotMotionMapUpdater::update(ElevationMap& map, const Pose& robotPose, con
   rotationCovariance(2, 2) = relativeCovariance(3, 3);
 
   // Map to robot pose rotation (R_B_M = R_I_B^T * R_I_M).
-  kindr::RotationMatrixPD mapToRobotRotation = kindr::RotationMatrixPD(robotPose.getRotation().inverted() * map.getPose().getRotation());
+  kindr::RotationMatrixPD mapToRobotRotation =
+      kindr::RotationMatrixPD(robotPose.getRotation().inverted() * map.getPose().getRotation());
   kindr::RotationMatrixPD mapToPreviousRobotRotationInverted =
       kindr::RotationMatrixPD(previousRobotPose_.getRotation().inverted() * map.getPose().getRotation()).inverted();
 
@@ -77,19 +83,23 @@ bool RobotMotionMapUpdater::update(ElevationMap& map, const Pose& robotPose, con
   auto& heightLayer = map.getRawGridMap()["elevation"];
 
   // For each cell in map. // TODO(max): Change to new iterator.
-  for (unsigned int i = 0; i < static_cast<unsigned int>(size(0)); ++i) {
-    for (unsigned int j = 0; j < static_cast<unsigned int>(size(1)); ++j) {
+  for (unsigned int i = 0; i < static_cast<unsigned int>(size(0)); ++i)
+  {
+    for (unsigned int j = 0; j < static_cast<unsigned int>(size(1)); ++j)
+    {
       kindr::Position3D cellPosition;  // M_r_MP
 
       const auto height = heightLayer(i, j);
-      if (std::isfinite(height)) {
+      if (std::isfinite(height))
+      {
         grid_map::Position position;
-        map.getRawGridMap().getPosition({i, j}, position);
-        cellPosition = {position.x(), position.y(), height};
+        map.getRawGridMap().getPosition({ i, j }, position);
+        cellPosition = { position.x(), position.y(), height };
 
         // Rotation Jacobian J_R (25)
         const Eigen::Matrix3d rotationJacobian =
-            -kindr::getSkewMatrixFromVector((positionRobotToMap + cellPosition).vector()) * mapToPreviousRobotRotationInverted.matrix();
+            -kindr::getSkewMatrixFromVector((positionRobotToMap + cellPosition).vector()) *
+            mapToPreviousRobotRotationInverted.matrix();
 
         // Rotation variance update.
         const Eigen::Matrix2f rotationVarianceUpdate =
@@ -100,7 +110,9 @@ bool RobotMotionMapUpdater::update(ElevationMap& map, const Pose& robotPose, con
         horizontalVarianceUpdateX(i, j) = translationVarianceUpdate.x() + rotationVarianceUpdate(0, 0);
         horizontalVarianceUpdateY(i, j) = translationVarianceUpdate.y() + rotationVarianceUpdate(1, 1);
         horizontalVarianceUpdateXY(i, j) = rotationVarianceUpdate(0, 1);
-      } else {
+      }
+      else
+      {
         // Cell invalid. // TODO(max): Change to new functions
         varianceUpdate(i, j) = std::numeric_limits<float>::infinity();
         horizontalVarianceUpdateX(i, j) = std::numeric_limits<float>::infinity();
@@ -117,12 +129,14 @@ bool RobotMotionMapUpdater::update(ElevationMap& map, const Pose& robotPose, con
 }
 
 bool RobotMotionMapUpdater::computeReducedCovariance(const Pose& robotPose, const PoseCovariance& robotPoseCovariance,
-                                                     ReducedCovariance& reducedCovariance) {
+                                                     ReducedCovariance& reducedCovariance)
+{
   // Get augmented Jacobian (A.4).
   kindr::EulerAnglesZyxPD eulerAngles(robotPose.getRotation());
   double tanOfPitch = tan(eulerAngles.pitch());
   // (A.5)
-  Eigen::Matrix<double, 1, 3> yawJacobian(cos(eulerAngles.yaw()) * tanOfPitch, sin(eulerAngles.yaw()) * tanOfPitch, 1.0);
+  Eigen::Matrix<double, 1, 3> yawJacobian(cos(eulerAngles.yaw()) * tanOfPitch, sin(eulerAngles.yaw()) * tanOfPitch,
+                                          1.0);
   Eigen::Matrix<double, 4, 6> jacobian;
   jacobian.setZero();
   jacobian.topLeftCorner(3, 3).setIdentity();
@@ -134,7 +148,8 @@ bool RobotMotionMapUpdater::computeReducedCovariance(const Pose& robotPose, cons
 }
 
 bool RobotMotionMapUpdater::computeRelativeCovariance(const Pose& robotPose, const ReducedCovariance& reducedCovariance,
-                                                      ReducedCovariance& relativeCovariance) {
+                                                      ReducedCovariance& relativeCovariance)
+{
   // Rotation matrix of z-align frame R_I_tilde_B.
   const kindr::RotationVectorPD rotationVector_I_B(robotPose.getRotation());
   const kindr::RotationVectorPD rotationVector_I_tilde_B(0.0, 0.0, rotationVector_I_B.vector().z());
@@ -149,7 +164,8 @@ bool RobotMotionMapUpdater::computeRelativeCovariance(const Pose& robotPose, con
   Jacobian F;
   F.setIdentity();
   // TODO(max): Why does Eigen::Vector3d::UnitZ() not work?
-  F.topRightCorner(3, 1) = kindr::getSkewMatrixFromVector(Eigen::Vector3d(0.0, 0.0, 1.0)) * R_I_tilde_B.matrix() * v_Delta_t.vector();
+  F.topRightCorner(3, 1) =
+      kindr::getSkewMatrixFromVector(Eigen::Vector3d(0.0, 0.0, 1.0)) * R_I_tilde_B.matrix() * v_Delta_t.vector();
 
   // Jacobian inv(G) * Delta t (A.14).
   Jacobian inv_G_Delta_t;
@@ -160,7 +176,8 @@ bool RobotMotionMapUpdater::computeRelativeCovariance(const Pose& robotPose, con
   inv_G_transpose_Delta_t.topLeftCorner(3, 3) = R_I_tilde_B.matrix();
 
   // Relative (reduced) robot covariance (A.13).
-  relativeCovariance = inv_G_Delta_t * (reducedCovariance - F * previousReducedCovariance_ * F.transpose()) * inv_G_transpose_Delta_t;
+  relativeCovariance =
+      inv_G_Delta_t * (reducedCovariance - F * previousReducedCovariance_ * F.transpose()) * inv_G_transpose_Delta_t;
 
   return true;
 }
