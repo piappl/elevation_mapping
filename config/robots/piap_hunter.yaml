@@ -1,0 +1,37 @@
+/**:
+  ros__parameters:
+    # inputs: ['mid360_0', 'mid360_1']
+    inputs: ['merged']
+    mid360_0: # A name to identify the input source
+      type: pointcloud # Supported types: pointcloud
+      topic: /piap_hunter/livox/mid360_0/lidar
+      queue_size: 10
+      publish_on_update: false # Whether to publish the elevation map after a callback from this source.
+      sensor_processor:
+        type: laser
+    mid360_1: # A name to identify the input source
+      type: pointcloud # Supported types: pointcloud
+      topic: /piap_hunter/livox/mid360_1/lidar
+      queue_size: 10
+      publish_on_update: true # Whether to publish the elevation map after a callback from this source.
+      sensor_processor:
+        type: laser
+    merged:
+      type: pointcloud # Supported types: pointcloud
+      topic: /piap_hunter/merged_pointcloud
+      queue_size: 1
+      publish_on_update: true # Whether to publish the elevation map after a callback from this source.
+      sensor_processor:
+        type: laser
+    map_frame_id: "map"
+    robot_base_frame_id: "piap_hunter_base_link"
+    robot_pose_with_covariance_topic: "/piap_hunter/ackermann_steering_controller/odometry"
+    track_point_frame_id: "piap_hunter_base_link"
+    track_point_x: 0.0
+    track_point_y: 0.0
+    track_point_z: 0.0
+    #
+    # min_update_rate: 10.0
+    # fused_map_publishing_rate: 0.1
+    # time_tolerance: 0.3
+    # time_offset_for_point_cloud: 0.3
