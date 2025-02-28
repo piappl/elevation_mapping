@@ -118,6 +118,7 @@ bool ElevationMap::add(const PointCloudType::Ptr pointCloud, Eigen::VectorXf& po
   std::vector<Eigen::Ref<const grid_map::Matrix>> basicLayers_;
   for (const std::string& layer : rawMap_.getBasicLayers())
   {
+    std::cout << "layer " << layer << std::endl;
     basicLayers_.push_back(rawMap_.get(layer));
   }
 
@@ -126,8 +127,17 @@ bool ElevationMap::add(const PointCloudType::Ptr pointCloud, Eigen::VectorXf& po
     auto& point = pointCloud->points[i];
     grid_map::Index index;
     grid_map::Position position(point.x, point.y);  // NOLINT(cppcoreguidelines-pro-type-union-access)
+    // if (i > pointCloud->size() - 20)
+    // {
+    //   std::cout << "x,y,z" << std::to_string(point.x) << "," << std::to_string(point.y) << ","
+    //             << std::to_string(point.z) << std::endl;
+    // }
     if (!rawMap_.getIndex(position, index))
     {
+      // if (i > pointCloud->size() - 20)
+      // {
+      //   std::cout << "skip point " << std::to_string(i) << "/" << std::to_string(pointCloud->size()) << std::endl;
+      // }
       continue;  // Skip this point if it does not lie within the elevation map.
     }
 
@@ -432,6 +442,7 @@ bool ElevationMap::fuse(const grid_map::Index& topLeftIndex, const grid_map::Ind
 
 void ElevationMap::visibilityCleanup(const rclcpp::Time& updatedTime)
 {
+  std::cout << "visibilityCleanup" << std::endl;
   // Get current time to compute calculation time.
   const auto methodStartTime = std::chrono::system_clock::now();
   const double timeSinceInitialization = (updatedTime - initialTime_).seconds();

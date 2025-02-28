@@ -277,6 +277,10 @@ private:
   //! ROS nodehandle.
   std::shared_ptr<rclcpp::Node> nodeHandle_;
 
+  void odomCallback(const nav_msgs::msg::Odometry::ConstSharedPtr& msg);
+  message_filters::Subscriber<nav_msgs::msg::Odometry> odom_sub_;
+  std::shared_ptr<message_filters::Cache<nav_msgs::msg::Odometry>> odom_cache_;
+
 protected:
   //! Input sources.
   InputSourceManager inputSources_;
