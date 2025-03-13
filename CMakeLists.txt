@@ -89,7 +89,7 @@ add_library(${PROJECT_NAME}_pcl_types
 )
 
 target_link_libraries(${PROJECT_NAME}_pcl_types
-  ${PCL_LIBRARIES} 
+  ${PCL_LIBRARIES}
 )
 
 ament_target_dependencies(${PROJECT_NAME}_pcl_types
@@ -119,13 +119,12 @@ ament_target_dependencies(${PROJECT_NAME}_library
 target_link_libraries(${PROJECT_NAME}_library
   ${PROJECT_NAME}_pcl_types
   ${Boost_LIBRARIES}
-  pthread  
+  pthread
 )
 
 ##############
 # Executable #
 ##############
-
 add_executable(${PROJECT_NAME}
   src/elevation_mapping_node.cpp
 )
@@ -147,6 +146,16 @@ target_link_libraries(${PROJECT_NAME}
   ${PROJECT_NAME}_library
 )
 
+add_executable(
+  traversability_estimation_node
+  src/traversability_estimation_node.cpp
+)
+
+ament_target_dependencies(
+  traversability_estimation_node
+  ${DEPENDENCIES}
+)
+
 #############
 ## Install ##
 #############
@@ -162,14 +171,20 @@ install(TARGETS
 
 install(TARGETS
   ${PROJECT_NAME}
+  traversability_estimation_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS
+  ${PROJECT_NAME}
   listener
   DESTINATION lib/${PROJECT_NAME}
 )
 
 # install(
-#   DIRECTORY 
+#   DIRECTORY
 #     include/${PROJECT_NAME}/
-#   DESTINATION 
+#   DESTINATION
 #     ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 # )
 
