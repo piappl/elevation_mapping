@@ -474,7 +474,7 @@ void ElevationMapping::pointCloudCallback(sensor_msgs::msg::PointCloud2::ConstSh
   }
 
   // Check if point cloud has corresponding robot pose at the beginning
-  if (!receivedFirstMatchingPointcloudAndPose_)
+  if (!receivedFirstMatchingPointcloudAndPose_ && !ignoreRobotMotionUpdates_)
   {
     const double oldestPoseTime = odom_cache_->getOldestTime().seconds();
     const double currentPointCloudTime = rclcpp::Time(pointCloudMsg->header.stamp, RCL_ROS_TIME).seconds();
