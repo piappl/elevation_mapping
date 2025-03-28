@@ -8,16 +8,20 @@ TraversabilityEstimationNode::TraversabilityEstimationNode() : Node("traversabil
 void TraversabilityEstimationNode::init()
 {
   // Declare parameters
-  this->declare_parameter<double>("traversability_threshold", 0.1);
+  this->declare_parameter<double>("traversability_threshold", 0.2);
   this->declare_parameter<std::string>("traversability_map_topic", "traversability_map");
   this->declare_parameter<std::string>("occupancy_map_topic", "local_map");
   this->declare_parameter<std::string>("elevation_map_topic", "elevation_map");
+  this->declare_parameter<double>("slope_scaling", 1.0);
+  this->declare_parameter<double>("slope_search_radius", 0.3);
 
   // Get parameters
   this->get_parameter("traversability_threshold", mTraversabilityThreshold);
   this->get_parameter("traversability_map_topic", mTraversabilityMapTopic);
   this->get_parameter("occupancy_map_topic", mOccupancyMapTopic);
   this->get_parameter("elevation_map_topic", mElevationMapTopic);
+  this->get_parameter("slope_scaling", mSlopeScaling);
+  this->get_parameter("slope_search_radius", mSlopeSearchRadius);
 
   initCommunication();
   RCLCPP_INFO(this->get_logger(), "Traversability Node Initialized.");
@@ -67,7 +71,7 @@ void TraversabilityEstimationNode::computeTraversability(const grid_map_msgs::ms
 
     // Compute height variation in a small neighborhood
     double max_slope = 0.0;
-    for (grid_map::CircleIterator sub_it(map, position, 0.4); !sub_it.isPastEnd(); ++sub_it)
+    for (grid_map::CircleIterator sub_it(map, position, mSlopeSearchRadius); !sub_it.isPastEnd(); ++sub_it)
     {
       if ((*it).isApprox(*sub_it))
         continue;
@@ -82,7 +86,7 @@ void TraversabilityEstimationNode::computeTraversability(const grid_map_msgs::ms
     }
 
     // Define traversability based on slope
-    double traversability = std::max(0.0, 1.0 - (max_slope / 0.2));
+    double traversability = std::max(0.0, 1.0 - max_slope * mSlopeScaling);
     map.at("traversability", *it) = static_cast<float>(traversability);
   }
 
@@ -97,40 +101,6 @@ void TraversabilityEstimationNode::computeTraversability(const grid_map_msgs::ms
 
 void TraversabilityEstimationNode::publishOccupancyGrid(const grid_map::GridMap& gridMap)
 {
-  // std::cout << "publishOccupancyGrid 1" << std::endl;
-  // nav_msgs::msg::OccupancyGrid message;
-  // grid_map::GridMapRosConverter::toOccupancyGrid(map, "traversability", 1.0, 0.0, message);
-  // // Convert GridMap to OccupancyGrid
-  // nav_msgs::msg::OccupancyGrid occupancy_msg;
-  // occupancy_msg.header.stamp = this->get_clock()->now();
-  // occupancy_msg.header.frame_id = "map";  // Change if needed
-  // occupancy_msg.info.resolution = map.getResolution();
-  // occupancy_msg.info.width = map.getSize()(0);
-  // occupancy_msg.info.height = map.getSize()(1);
-
-  // grid_map::Position origin;
-  // map.getPosition(grid_map::Index(0, 0), origin);
-  // occupancy_msg.info.origin.position.x = origin.x();
-  // occupancy_msg.info.origin.position.y = origin.y();
-  // occupancy_msg.info.origin.position.z = 0.0;
-  // occupancy_msg.info.origin.orientation.w = 1.0;
-
-  // // Convert traversability to occupancy grid format
-  // occupancy_msg.data.resize(occupancy_msg.info.width * occupancy_msg.info.height, -1);
-
-  // for (grid_map::GridMapIterator it(map); !it.isPastEnd(); ++it)
-  // {
-  //   grid_map::Index index = *it;
-  //   float traversability = map.at("traversability", index);
-
-  //   int grid_index = index(1) * occupancy_msg.info.width + index(0);
-  //   if (traversability > mTraversabilityThreshold)
-  //     occupancy_msg.data[grid_index] = 1;  // Free space
-  //   else
-  //     occupancy_msg.data[grid_index] = 100;  // Obstacle
-  // }
-  // std::cout << "publishOccupancyGrid 2" << std::endl;
-
   nav_msgs::msg::OccupancyGrid occupancyGrid;
   occupancyGrid.header.frame_id = gridMap.getFrameId();
   occupancyGrid.header.stamp = rclcpp::Time(gridMap.getTimestamp());
@@ -156,8 +126,8 @@ void TraversabilityEstimationNode::publishOccupancyGrid(const grid_map::GridMap&
   const float cellMax = 100;
   const float cellRange = cellMax - cellMin;
 
-  float dataMin = 1.0;
-  float dataMax = 0.0;
+  float dataMin = 0.0;
+  float dataMax = 1.0;
   std::string layer = "traversability";
   for (grid_map::GridMapIterator iterator(gridMap); !iterator.isPastEnd(); ++iterator)
   {
@@ -173,7 +143,7 @@ void TraversabilityEstimationNode::publishOccupancyGrid(const grid_map::GridMap&
     }
     else
     {
-      value = cellMin + std::min(std::max(0.0f, value), 1.0f) * cellRange;
+      value = cellMin + (1 - std::min(std::max(0.0f, value), 1.0f)) * cellRange;
     }
     size_t index = grid_map::getLinearIndexFromIndex(iterator.getUnwrappedIndex(), gridMap.getSize(), false);
     // Reverse cell order because of different conventions between occupancy grid and grid map.

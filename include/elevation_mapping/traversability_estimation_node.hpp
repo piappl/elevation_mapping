@@ -22,7 +22,7 @@ private:
   void computeTraversability(const grid_map_msgs::msg::GridMap::SharedPtr msg);
   void publishOccupancyGrid(const grid_map::GridMap& gridMap);
 
-  double mTraversabilityThreshold;
+  double mTraversabilityThreshold, mSlopeScaling, mSlopeSearchRadius;
 
   std::string mTraversabilityMapTopic;
   std::string mOccupancyMapTopic;
