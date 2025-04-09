@@ -118,7 +118,7 @@ bool ElevationMap::add(const PointCloudType::Ptr pointCloud, Eigen::VectorXf& po
   std::vector<Eigen::Ref<const grid_map::Matrix>> basicLayers_;
   for (const std::string& layer : rawMap_.getBasicLayers())
   {
-    std::cout << "layer " << layer << std::endl;
+    // std::cout << "layer " << layer << std::endl;
     basicLayers_.push_back(rawMap_.get(layer));
   }
 
@@ -228,7 +228,8 @@ bool ElevationMap::add(const PointCloudType::Ptr pointCloud, Eigen::VectorXf& po
   rawMap_.setTimestamp(timestamp.nanoseconds());  // Point cloud stores time in microseconds.
 
   const std::chrono::duration<double> duration = std::chrono::system_clock::now() - methodStartTime;
-  RCLCPP_INFO(nodeHandle_->get_logger(), "Raw map has been updated with a new point cloud in %f s.", duration.count());
+  // RCLCPP_INFO(nodeHandle_->get_logger(), "Raw map has been updated with a new point cloud in %f s.",
+  // duration.count());
   return true;
 }
 
@@ -442,7 +443,7 @@ bool ElevationMap::fuse(const grid_map::Index& topLeftIndex, const grid_map::Ind
 
 void ElevationMap::visibilityCleanup(const rclcpp::Time& updatedTime)
 {
-  std::cout << "visibilityCleanup" << std::endl;
+  // std::cout << "visibilityCleanup" << std::endl;
   // Get current time to compute calculation time.
   const auto methodStartTime = std::chrono::system_clock::now();
   const double timeSinceInitialization = (updatedTime - initialTime_).seconds();

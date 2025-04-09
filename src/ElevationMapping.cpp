@@ -459,7 +459,7 @@ bool ElevationMapping::initialize()
 void ElevationMapping::pointCloudCallback(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointCloudMsg,
                                           bool publishPointCloud, const SensorProcessorBase::Ptr& sensorProcessor_)
 {
-  RCLCPP_INFO(nodeHandle_->get_logger(), "Processing data from: %s", pointCloudMsg->header.frame_id.c_str());
+  // RCLCPP_INFO(nodeHandle_->get_logger(), "Processing data from: %s", pointCloudMsg->header.frame_id.c_str());
   if (!updatesEnabled_)
   {
     auto clock = nodeHandle_->get_clock();
@@ -550,7 +550,7 @@ void ElevationMapping::pointCloudCallback(sensor_msgs::msg::PointCloud2::ConstSh
   }
 
   // Process point cloud.
-  RCLCPP_INFO_STREAM(nodeHandle_->get_logger(), "Variance is:" << robotPoseCovariance);
+  // RCLCPP_INFO_STREAM(nodeHandle_->get_logger(), "Variance is:" << robotPoseCovariance);
   // std::cout << "Covariance Matrix:\n";
   // for (int i = 0; i < 6; ++i)
   // {
@@ -577,10 +577,10 @@ void ElevationMapping::pointCloudCallback(sensor_msgs::msg::PointCloud2::ConstSh
     return;
   }
 
-  RCLCPP_INFO_STREAM(nodeHandle_->get_logger(),
-                     "Variance is:" << measurementVariances[0] << " , " << measurementVariances[10] << " , "
-                                    << measurementVariances[100] << " , " << measurementVariances[110] << " , "
-                                    << measurementVariances[120]);
+  // RCLCPP_INFO_STREAM(nodeHandle_->get_logger(),
+  //                    "Variance is:" << measurementVariances[0] << " , " << measurementVariances[10] << " , "
+  //                                   << measurementVariances[100] << " , " << measurementVariances[110] << " , "
+  //                                   << measurementVariances[120]);
 
   boost::recursive_mutex::scoped_lock scopedLock(map_.getRawDataMutex());
 
@@ -760,7 +760,7 @@ bool ElevationMapping::updatePrediction(const rclcpp::Time& time)
 
 bool ElevationMapping::updateMapLocation()
 {
-  RCLCPP_INFO(nodeHandle_->get_logger(), "Elevation map is checked for relocalization.");
+  // RCLCPP_INFO(nodeHandle_->get_logger(), "Elevation map is checked for relocalization.");
 
   geometry_msgs::msg::PointStamped trackPoint;
   trackPoint.header.frame_id = trackPointFrameId_;

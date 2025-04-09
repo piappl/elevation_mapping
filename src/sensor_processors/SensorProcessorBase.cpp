@@ -144,7 +144,7 @@ bool SensorProcessorBase::process(const PointCloudType::ConstPtr pointCloudInput
   std::vector<PointCloudType::Ptr> pointClouds({ pointCloudMapFrame, pointCloudSensorFrame });
   // FIXME: Removing of points should be done in the sensor frame
   removePointsOutsideLimits(pointCloudMapFrame, pointClouds);
-  std::cout << "aaa1" << std::endl;
+  // std::cout << "aaa1" << std::endl;
   // Compute variances
   return computeVariances(pointCloudSensorFrame, robotPoseCovariance, variances);
 }
@@ -315,7 +315,7 @@ bool SensorProcessorBase::filterPointCloud(const PointCloudType::Ptr pointCloud)
   // FIXME: get_logger causes SEGFAULT
   // RCLCPP_DEBUG_THROTTLE(nodeHandle_->get_logger(), clock, 2, "cleanPointCloud() reduced point cloud to %i points.",
   // static_cast<int>(pointCloud->size()));
-  std::cout << "filterPointCloud end" << std::endl;
+  // std::cout << "filterPointCloud end" << std::endl;
   return true;
 }
 
