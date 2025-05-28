@@ -12,6 +12,7 @@ void TraversabilityEstimationNode::init()
   this->declare_parameter<std::string>("traversability_map_topic", "traversability_map");
   this->declare_parameter<std::string>("occupancy_map_topic", "local_map");
   this->declare_parameter<std::string>("elevation_map_topic", "elevation_map");
+  this->declare_parameter<bool>("add_obstacles", true);
   this->declare_parameter<double>("slope_scaling", 1.0);
   this->declare_parameter<double>("slope_search_radius", 0.3);
 
@@ -20,6 +21,7 @@ void TraversabilityEstimationNode::init()
   this->get_parameter("traversability_map_topic", mTraversabilityMapTopic);
   this->get_parameter("occupancy_map_topic", mOccupancyMapTopic);
   this->get_parameter("elevation_map_topic", mElevationMapTopic);
+  this->get_parameter("add_obstacles", mAddObstacles);
   this->get_parameter("slope_scaling", mSlopeScaling);
   this->get_parameter("slope_search_radius", mSlopeSearchRadius);
 
@@ -40,6 +42,9 @@ void TraversabilityEstimationNode::initCommunication()
   mSubElevation = this->create_subscription<grid_map_msgs::msg::GridMap>(
       mElevationMapTopic, rclcpp::SensorDataQoS(),
       std::bind(&TraversabilityEstimationNode::computeTraversability, this, std::placeholders::_1));
+  mSetMapModeServer = this->create_service<std_srvs::srv::SetBool>(
+      "turn_off_obstacles", std::bind(&TraversabilityEstimationNode::callbackTurnOffObstacles, this,
+                                      std::placeholders::_1, std::placeholders::_2));
 }
 
 void TraversabilityEstimationNode::computeTraversability(const grid_map_msgs::msg::GridMap::SharedPtr msg)
@@ -99,6 +104,13 @@ void TraversabilityEstimationNode::computeTraversability(const grid_map_msgs::ms
   publishOccupancyGrid(map);
 }
 
+void TraversabilityEstimationNode::callbackTurnOffObstacles(std_srvs::srv::SetBool::Request::ConstSharedPtr req,
+                                                            std_srvs::srv::SetBool::Response::SharedPtr res)
+{
+  mAddObstacles = !req->data;
+  res->success = true;
+}
+
 void TraversabilityEstimationNode::publishOccupancyGrid(const grid_map::GridMap& gridMap)
 {
   nav_msgs::msg::OccupancyGrid occupancyGrid;
@@ -120,34 +132,35 @@ void TraversabilityEstimationNode::publishOccupancyGrid(const grid_map::GridMap&
   size_t nCells = gridMap.getSize().prod();
   occupancyGrid.data.resize(nCells);
   std::fill(occupancyGrid.data.begin(), occupancyGrid.data.end(), -1);
+  if (mAddObstacles)
+  {  // Occupancy probabilities are in the range [0,100]. Unknown is 100.
+    const float cellMin = 0;
+    const float cellMax = 100;
+    const float cellRange = cellMax - cellMin;
 
-  // Occupancy probabilities are in the range [0,100]. Unknown is 100.
-  const float cellMin = 0;
-  const float cellMax = 100;
-  const float cellRange = cellMax - cellMin;
-
-  float dataMin = 0.0;
-  float dataMax = 1.0;
-  std::string layer = "traversability";
-  for (grid_map::GridMapIterator iterator(gridMap); !iterator.isPastEnd(); ++iterator)
-  {
-    float initValue = gridMap.at(layer, *iterator);
-    float value = (gridMap.at(layer, *iterator) - dataMin) / (dataMax - dataMin);
-    if (std::isnan(initValue))
+    float dataMin = 0.0;
+    float dataMax = 1.0;
+    std::string layer = "traversability";
+    for (grid_map::GridMapIterator iterator(gridMap); !iterator.isPastEnd(); ++iterator)
     {
-      value = 100;
+      float initValue = gridMap.at(layer, *iterator);
+      float value = (gridMap.at(layer, *iterator) - dataMin) / (dataMax - dataMin);
+      if (std::isnan(initValue))
+      {
+        value = 100;
+      }
+      else if (value < mTraversabilityThreshold)
+      {
+        value = 100;
+      }
+      else
+      {
+        value = cellMin + (1 - std::min(std::max(0.0f, value), 1.0f)) * cellRange;
+      }
+      size_t index = grid_map::getLinearIndexFromIndex(iterator.getUnwrappedIndex(), gridMap.getSize(), false);
+      // Reverse cell order because of different conventions between occupancy grid and grid map.
+      occupancyGrid.data[nCells - index - 1] = value;
     }
-    else if (value < mTraversabilityThreshold)
-    {
-      value = 100;
-    }
-    else
-    {
-      value = cellMin + (1 - std::min(std::max(0.0f, value), 1.0f)) * cellRange;
-    }
-    size_t index = grid_map::getLinearIndexFromIndex(iterator.getUnwrappedIndex(), gridMap.getSize(), false);
-    // Reverse cell order because of different conventions between occupancy grid and grid map.
-    occupancyGrid.data[nCells - index - 1] = value;
   }
   mPubOccupancy->publish(occupancyGrid);
 }

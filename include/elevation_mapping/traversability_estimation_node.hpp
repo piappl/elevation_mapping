@@ -10,6 +10,8 @@
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 
+#include <std_srvs/srv/set_bool.hpp>
+
 class TraversabilityEstimationNode : public rclcpp::Node
 {
 public:
@@ -20,8 +22,11 @@ public:
 private:
   void initCommunication();
   void computeTraversability(const grid_map_msgs::msg::GridMap::SharedPtr msg);
+  void callbackTurnOffObstacles(std_srvs::srv::SetBool::Request::ConstSharedPtr req,
+                                std_srvs::srv::SetBool::Response::SharedPtr res);
   void publishOccupancyGrid(const grid_map::GridMap& gridMap);
 
+  bool mAddObstacles;
   double mTraversabilityThreshold, mSlopeScaling, mSlopeSearchRadius;
 
   std::string mTraversabilityMapTopic;
@@ -31,4 +36,5 @@ private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr mPubTraversability;
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr mPubOccupancy;
   rclcpp::Subscription<grid_map_msgs::msg::GridMap>::SharedPtr mSubElevation;
+  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr mSetMapModeServer;
 };
