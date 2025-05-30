@@ -69,10 +69,9 @@ void TraversabilityEstimationNode::computeTraversability(const grid_map_msgs::ms
     map.getPosition(*it, position);
 
     // Get elevation at current position
-    float elevation;
-    // if (!map.isValid(position, "elevation"))
-    //   continue;
-    elevation = map.atPosition("elevation", position);
+    if (!map.isValid(*it, "elevation"))
+      continue;
+    float elevation = map.atPosition("elevation", position);
 
     // Compute height variation in a small neighborhood
     double max_slope = 0.0;
@@ -133,7 +132,7 @@ void TraversabilityEstimationNode::publishOccupancyGrid(const grid_map::GridMap&
   occupancyGrid.data.resize(nCells);
   std::fill(occupancyGrid.data.begin(), occupancyGrid.data.end(), -1);
   if (mAddObstacles)
-  {  // Occupancy probabilities are in the range [0,100]. Unknown is 100.
+  {  // Occupancy probabilities are in the range [0,100]. Unknown is -1.
     const float cellMin = 0;
     const float cellMax = 100;
     const float cellRange = cellMax - cellMin;
@@ -143,13 +142,11 @@ void TraversabilityEstimationNode::publishOccupancyGrid(const grid_map::GridMap&
     std::string layer = "traversability";
     for (grid_map::GridMapIterator iterator(gridMap); !iterator.isPastEnd(); ++iterator)
     {
+      if (!gridMap.isValid(*iterator, layer))
+        continue;
       float initValue = gridMap.at(layer, *iterator);
       float value = (gridMap.at(layer, *iterator) - dataMin) / (dataMax - dataMin);
-      if (std::isnan(initValue))
-      {
-        value = 100;
-      }
-      else if (value < mTraversabilityThreshold)
+      if (value < mTraversabilityThreshold)
       {
         value = 100;
       }
