@@ -52,8 +52,8 @@ void TraversabilityEstimationNode::computeTraversability(const grid_map_msgs::ms
   // Convert ROS message to GridMap
   grid_map::GridMap map;
   grid_map::GridMapRosConverter::fromMessage(*msg, map);
-
-  if (!map.exists("elevation"))
+  std::string operationLayer = "elevation";
+  if (!map.exists(operationLayer))
   {
     RCLCPP_WARN(this->get_logger(), "No 'elevation' layer found in the received grid map.");
     return;
@@ -69,9 +69,9 @@ void TraversabilityEstimationNode::computeTraversability(const grid_map_msgs::ms
     map.getPosition(*it, position);
 
     // Get elevation at current position
-    if (!map.isValid(*it, "elevation"))
+    if (!map.isValid(*it, operationLayer))
       continue;
-    float elevation = map.atPosition("elevation", position);
+    float elevation = map.atPosition(operationLayer, position);
 
     // Compute height variation in a small neighborhood
     double max_slope = 0.0;
@@ -81,9 +81,9 @@ void TraversabilityEstimationNode::computeTraversability(const grid_map_msgs::ms
         continue;
 
       float neighbor_elevation;
-      if (map.isValid(*sub_it, "elevation"))
+      if (map.isValid(*sub_it, operationLayer))
       {
-        neighbor_elevation = map.at("elevation", *sub_it);
+        neighbor_elevation = map.at(operationLayer, *sub_it);
         double slope = std::abs(neighbor_elevation - elevation);
         max_slope = std::max(max_slope, slope);
       }
